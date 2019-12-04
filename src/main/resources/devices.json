@@ -1,0 +1,26 @@
+{
+  "android" : [
+    {
+      "name": "Samsung Galaxy J6",
+      "udid": "",
+      "version": "8.0"
+    },
+    {
+      "name": "Oppo",
+      "udid": "",
+      "version": "9.0"
+    }
+  ],
+  "ios" : [
+    {
+      "name": "iPhone 6",
+      "udid" : "",
+      "version" : "12.3.1"
+    },
+    {
+      "name": "iPhone 7",
+      "udid" : "",
+      "version" : "13.1"
+    }
+  ]
+}

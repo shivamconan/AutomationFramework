@@ -361,12 +361,15 @@ If you are running the xml file locally, you can add and specify your tests the 
    TN - Tag Name
  
 ### AppiumLibrary :
-   Class contains various utility methods to perform common appium actions like click(), swipe(), etc.
+   Class contains various utility methods to perform common appium actions like click, swipe, scroll etc.
    It takes locator received from locators properties file. In each method, it receives MobileElement object with the help of ElementLocator
-   as shown in example of Step 3 above.
+   as shown in example of Step 2 above. 
  
-### utility :
-   package contains JavaUtility, AndroidUtility, IosUtility classes which contains several helper methods.
+### WebLibrary :
+   Similar to AppiumLibrary, contains all utility methods of Selenium to help you write automation scripts. Contains methods to click, select, drag and drop, scroll, etc.
+   
+### JavaUtility :
+   Class contains several helper core Java methods to get current date, time, extract integers from string, etc. 
  
 ### resources :
    
@@ -423,7 +426,26 @@ If you are running the xml file locally, you can add and specify your tests the 
 When deviceName is passed from command line, the framework will fetch udid of the passed device from this file.
 
 ### Constants :
-Specifies static fields like DEALER_PACKAGE_NAME, etc
+Contains static fields majorly for all your paths -
+
+       public static final String slash = System.getProperty("file.separator");
+   
+       public static final String PROJECT_DIRECTORY = System.getProperty("user.dir");
+   
+       public static final String MAIN_DIRECTORY = PROJECT_DIRECTORY + slash + "src" + slash + "main";
+   
+       public static final String TEST_DIRECTORY = PROJECT_DIRECTORY + slash + "src" + slash + "test";
+   
+       public static final String MAIN_RESOURCES_DIRECTORY = MAIN_DIRECTORY + slash + "resources";
+   
+       public static final String START_ACTIVITY_NAME = "com.test.yourActivity";
+   
+       public static final int DEFAULT_OBJECT_WAIT_TIME = 10;
+   
+       public static final String DEVICES_JSON_PATH = MAIN_DIRECTORY + slash + "resources" + slash + "devices.json";
+   
+       public static final String LOCATORS_PATH = MAIN_DIRECTORY + slash + "locators" + slash + EnvironmentParameters.getPlatformOs();
+
 
 ### Defaults :
 Specifies static fields DEFAULT_ENVIRONMENT_PATH, DEALER_DEFAULT_APP_PATH, etc

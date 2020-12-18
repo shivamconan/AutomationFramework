@@ -2,7 +2,6 @@ package utility;
 
 import constants.Constants;
 import constants.Defaults;
-import devices.Dealer;
 import org.testng.Reporter;
 import sun.dc.pr.PRError;
 

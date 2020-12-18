@@ -1,7 +1,6 @@
 package testFlows;
 
 import constants.Constants;
-import devices.Dealer;
 import library.SessionManager;
 import org.testng.Assert;
 import testSteps.LoginSteps;

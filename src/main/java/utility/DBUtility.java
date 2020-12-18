@@ -2,7 +2,6 @@ package utility;
 
 
 import constants.Constants;
-import devices.Car;
 import library.SessionManager;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
@@ -341,11 +340,4 @@ public class DBUtility {
         }
         return lastBidTransactionId;
     }
-
-    public void expireBid(Car car) {
-        String timestamp = JavaUtility.get4DaysEarlierDateTime();
-        String updateQuery = "UPDATE app_bid SET bid_time = '" + timestamp + "' where appointment_id='" + car.getAppointmentId() + "' and is_higher_bid = 1";
-        updateQuery(updateQuery);
-    }
-
 }

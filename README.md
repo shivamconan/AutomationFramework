@@ -1,5 +1,5 @@
 
-## Cubii automation framework - Web + App + Api
+## Master Automation Framework - Web + App + Api
 
 ## Based on
 
@@ -37,7 +37,7 @@ Every Module/Screen Test Cases you will create using this framework will have fo
 
 * ### Screen Class
 
-	Each Screen Class will have static fields to store both android & ios locators of CubiiMobileBy type.
+	Each Screen Class will have static fields to store both android & ios locators of ProjectMobileBy type.
 
 * ### Test Step Class
 
@@ -67,14 +67,14 @@ We are going to see an example of a common login test case. I will attach code s
 #### Step 1 : Create a `LoginScreen.java` class file to store all the locators for Login functionality - 
 
  ```java
- public final static CubiiMobileBy SIGN_IN_WITH_EMAIL_BTN = new CubiiMobileBy(MobileBy.id("ib_login_email"), MobileBy.xpath("//*[contains(@name, 'emailButton')]"));
- public final static CubiiMobileBy USER_NAME_FIELD = new CubiiMobileBy(MobileBy.xpath("//android.widget.EditText[contains(@resource-id,'editText')]"), MobileBy.xpath("//*[contains(@name,'emailTextField')]"));
+ public final static ProjectMobileBy SIGN_IN_WITH_EMAIL_BTN = new ProjectMobileBy(MobileBy.id("ib_login_email"), MobileBy.xpath("//*[contains(@name, 'emailButton')]"));
+ public final static ProjectMobileBy USER_NAME_FIELD = new ProjectMobileBy(MobileBy.xpath("//android.widget.EditText[contains(@resource-id,'editText')]"), MobileBy.xpath("//*[contains(@name,'emailTextField')]"));
  ```
 
-Here you will define fields of type CubiiMobileBy which accepts 2 MobileBy as arguments, one for android and other for ios.
+Here you will define fields of type ProjectMobileBy which accepts 2 MobileBy as arguments, one for android and other for ios.
 
 
-`CubiiMobileBy` is a special class in the framework, object of which holds together both os locators for the common element. It will supply the appropriate `MobileBy` locator to `AppiumDriver` based on execution os automatically on the go.
+`ProjectMobileBy` is a special class in the framework, object of which holds together both os locators for the common element. It will supply the appropriate `MobileBy` locator to `AppiumDriver` based on execution os automatically on the go.
 
 #### Step 2 : Create a Test Steps Class - `LoginTestSteps.java`, extending `LoginScreen` class created in Step 1
 

@@ -1,0 +1,17 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+
+<suite name="Smoke Suite" verbose="1" parallel="tests" thread-count="1">
+
+    <listeners>
+        <listener class-name="listeners.AnnotationTransformer" />
+        <listener class-name="org.testng.reporters.TestHTMLReporter" />
+    </listeners>
+
+    <test name="Login Test" >
+        <classes>
+            <class name="testClasses.authentication.LoginTest"></class>
+        </classes>
+    </test>
+
+</suite>
+

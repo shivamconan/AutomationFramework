@@ -1,13 +1,13 @@
 package utility;
 
 import constants.Constants;
-import library.AppiumLibrary;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.testng.Reporter;
 
 import java.io.*;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -37,6 +37,26 @@ public class PropertyFileUtility {
 
     public static Properties propertyFile(String fileName) {
         Properties temp = new Properties();
+        FileInputStream fileInput = null;
+        try {
+            fileInput = new FileInputStream(fileName);
+            temp.load(fileInput);
+        } catch (Exception e) {
+            logUtility.logException(ExceptionUtils.getStackTrace(e));
+        } finally {
+            try {
+                if (fileInput != null) {
+                    fileInput.close();
+                }
+            } catch (IOException e) {
+                logUtility.logException(ExceptionUtils.getStackTrace(e));
+            }
+        }
+        return temp;
+    }
+    
+    public static OrderedProperties property_File(String fileName) {
+    	OrderedProperties temp = new OrderedProperties();
         FileInputStream fileInput = null;
         try {
             fileInput = new FileInputStream(fileName);
@@ -109,5 +129,20 @@ public class PropertyFileUtility {
         } catch (IOException e) {
             logUtility.logException(ExceptionUtils.getStackTrace(e));
         }
+    }
+    
+    public List<Object> getProperties() {
+        String value = null;
+        try {
+            fileInputStream = new FileInputStream(fileName);
+            OrderedProperties prop = new OrderedProperties();
+            prop.load(fileInputStream);
+            return Collections.list(prop.keys());
+        } catch (IOException ex) {
+            logUtility.logException(ExceptionUtils.getStackTrace(ex));
+        } finally {
+            closeFile();
+        }
+        return Collections.emptyList();
     }
 }

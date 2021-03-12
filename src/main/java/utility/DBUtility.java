@@ -22,7 +22,7 @@ public class DBUtility {
     public DBUtility(SessionManager sessionManager) {
         try {
             logUtility.setExtentLogger(sessionManager.getExtentReporter().getExtentlogger());
-            Properties environmentProperties = PropertyFileUtility.propertyFile(Constants.ENVIRONMENT_PROPERTIES_PATH);
+            Properties environmentProperties = PropertyFileUtility.propertyFile("");
             dbUrl = environmentProperties.getProperty("dbUrl");
             username = environmentProperties.getProperty("username");
             password = environmentProperties.getProperty("password");
@@ -340,4 +340,5 @@ public class DBUtility {
         }
         return lastBidTransactionId;
     }
+
 }

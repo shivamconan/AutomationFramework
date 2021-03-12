@@ -2,11 +2,9 @@ package utility;
 
 import com.relevantcodes.extentreports.ExtentReports;
 import com.relevantcodes.extentreports.ExtentTest;
-import com.relevantcodes.extentreports.ReporterType;
 import constants.Constants;
 
 import java.io.File;
-import java.lang.reflect.Method;
 
 public class ExtentReporter {
 
@@ -15,7 +13,7 @@ public class ExtentReporter {
 
     public ExtentReporter() {
         extent = new ExtentReports(Constants.EXTENT_REPORTS_PATH, false);
-        extent.addSystemInfo("Host Name", "Dealer App Automation")
+        extent.addSystemInfo("Host Name", "Master automation framework")
                 .addSystemInfo("Environment", "Automation Testing")
                 .addSystemInfo("User Name", "Automation");
         extent.loadConfig(new File(Constants.EXTENT_CONFIG_PATH));

@@ -1,17 +1,20 @@
 package library;
 
 import constants.Constants;
-import constants.Defaults;
-import devices.Device;
+import model.TestConfiguration;
+import objects.Device;
 import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.Setting;
 import io.appium.java_client.android.AndroidDriver;
+import io.appium.java_client.android.AndroidElement;
 import io.appium.java_client.remote.AndroidMobileCapabilityType;
 import io.appium.java_client.remote.MobileCapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.testng.Assert;
 import utility.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,7 +27,6 @@ public class AndroidSessionManager extends SessionManager {
     private AppiumDriver driver = null;
     private Device device = null;
     private LogUtility logUtility = new LogUtility(AndroidSessionManager.class);
-    private LogUtility testLogger;
 
 
     @Override
@@ -51,7 +53,8 @@ public class AndroidSessionManager extends SessionManager {
     @Override
     public synchronized void initiateDriver() {
         DesiredCapabilities clientCapabilities = getClientCapabilities();
-        driver = new AndroidDriver<>(this.getAppiumService().getUrl(), clientCapabilities);
+        driver = new AndroidDriver<AndroidElement>(
+                appiumLocalService.getUrl(), clientCapabilities);
         ((AndroidDriver) driver).setSetting(Setting.NORMALIZE_TAG_NAMES, true);
         logUtility.logDebug("Android driver intitiated successfully");
     }
@@ -67,10 +70,17 @@ public class AndroidSessionManager extends SessionManager {
     @Override
     public List<Device> getExecutionDevicesList() {
         List<Device> androidDevices = new ArrayList<>();
-        if (EnvironmentParameters.getIsTestRunOnSpecificDevice()) {
-            androidDevices = getListOfDevicesFromDevicesJsonUsing("name", EnvironmentParameters.getExecutionDevicesNamesList());
+        if (TestConfiguration.getIsTestRunOnSpecificDevice()) {
+           // androidDevices = getListOfDevicesFromDevicesJsonUsing("name", TestConfiguration.getExecutionDevicesNamesList());
+            Assert.assertTrue(androidDevices.size() > 0, "Specific android device details was not found. Please add the device details in devices.json file." );
         } else {
-            androidDevices = getListOfDevicesFromDevicesJsonUsing("udid", getConnectedAndroidUdidsList());
+            List<String> udidListFetchedFromAdb = getConnectedAndroidUdidsList();
+            //Assert.assertTrue(udidListFetchedFromAdb.size()>0, "Found no connected android device from adb devices command. Make sure an android device is connected with usb debugging enabled and is unlocked.");
+            logUtility.logDebug("Connected android udids identified - " + Arrays.toString(udidListFetchedFromAdb.toArray()));
+
+            androidDevices = getListOfDevicesFromDevicesJsonUsing("udid", udidListFetchedFromAdb);
+            //Assert.assertTrue(androidDevices.size() > 0, "Connected android device details was not found in devices.json file. Please add the device details in it." );
+            logUtility.logDebug("Connected android device identified - " + Arrays.toString(udidListFetchedFromAdb.toArray()));
         }
         return androidDevices;
     }
@@ -109,14 +119,28 @@ public class AndroidSessionManager extends SessionManager {
         clientCapabilities.setCapability(MobileCapabilityType.UDID, device.getDeviceUdid());
         logUtility.logDebug("Tests running on udid - " + clientCapabilities.getCapability(MobileCapabilityType.UDID));
         // os specific details :
-        clientCapabilities.setCapability(MobileCapabilityType.APP, Defaults.DEALER_DEFAULT_ANDROID_APP_PATH);
-        clientCapabilities.setCapability(AndroidMobileCapabilityType.APP_PACKAGE, environmentProperties.getProperty("androidPackageName"));
+        //clientCapabilities.setCapability(MobileCapabilityType.APP, Defaults.DEALER_DEFAULT_ANDROID_APP_PATH);
+        clientCapabilities.setCapability(AndroidMobileCapabilityType.APP_PACKAGE, TestConfiguration.getAndroidPackageName());
         clientCapabilities.setCapability(AndroidMobileCapabilityType.APP_ACTIVITY, Constants.START_ACTIVITY_NAME);
         clientCapabilities.setCapability(AndroidMobileCapabilityType.AUTO_GRANT_PERMISSIONS, true);
         clientCapabilities.setCapability(AndroidMobileCapabilityType.APP_WAIT_ACTIVITY, Constants.START_ACTIVITY_NAME);
         clientCapabilities.setCapability(AndroidMobileCapabilityType.ANDROID_INSTALL_TIMEOUT, 90000 * 10);
+        clientCapabilities.setCapability(AndroidMobileCapabilityType.SYSTEM_PORT, getRandomFreePort());
+        clientCapabilities.setCapability("mjpegServerPort", getRandomFreePort());
         return clientCapabilities;
     }
 
+    public DesiredCapabilities getBrowserstackCapabilities() {
+        DesiredCapabilities clientCapabilities = new DesiredCapabilities();
+        clientCapabilities.setCapability("browserstack.user", "");
+        clientCapabilities.setCapability("browserstack.key", "");
+        clientCapabilities.setCapability(MobileCapabilityType.APP, "");
+        clientCapabilities.setCapability("device", "Google Pixel 3");
+        clientCapabilities.setCapability("os_version", "9.0");
+        clientCapabilities.setCapability("project", "First Java Project");
+        clientCapabilities.setCapability("build", "Java Android");
+        clientCapabilities.setCapability("name", "first_test");
+        return clientCapabilities;
+    }
 
 }

@@ -3,7 +3,6 @@ package library;
 import io.appium.java_client.MobileBy;
 import org.openqa.selenium.By;
 import org.testng.Assert;
-import org.testng.Reporter;
 
 /**
  * @author shivam mishra

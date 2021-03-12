@@ -1,29 +1,25 @@
 package library;
 
 import com.relevantcodes.extentreports.ExtentReports;
-import com.relevantcodes.extentreports.ExtentTest;
 import constants.Constants;
-import devices.Device;
+import objects.Device;
 import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.remote.MobileCapabilityType;
 import io.appium.java_client.service.local.AppiumDriverLocalService;
 import io.appium.java_client.service.local.AppiumServiceBuilder;
 import io.appium.java_client.service.local.flags.AndroidServerFlag;
 import io.appium.java_client.service.local.flags.GeneralServerFlag;
+import model.TestConfiguration;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import utility.*;
 
 import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author shivam mishra
@@ -46,7 +42,6 @@ public abstract class SessionManager {
     private LogUtility logUtility = new LogUtility(SessionManager.class);
 
     private ExtentReporter extentReporter;
-    public Properties environmentProperties = PropertyFileUtility.propertyFile(Constants.ENVIRONMENT_PROPERTIES_PATH);
 
     /*
         Initiate driver based on environment specified subject to free device availablity.
@@ -100,24 +95,40 @@ public abstract class SessionManager {
         extentReporter.closeExtentReport();
     }
 
+    //TODO Get android version & device name automatically from adb
     public List<Device> getListOfDevicesFromDevicesJsonUsing(String parameter, List<String> devicesParametersList) {
-        String platformOs = EnvironmentParameters.getPlatformOs();
-        return devicesParametersList.stream().map(individualdeviceParameter -> {
-            JSONObject devicesJsonFile = JSONFileUtility.getJsonFileAsJsonObject(Constants.DEVICES_JSON_PATH);
-            JSONArray platformDevicesArray = (JSONArray) devicesJsonFile.get(platformOs);
-            JSONObject deviceFoundFromJsonFile = (JSONObject) platformDevicesArray.stream().filter(deviceFromJson ->
-                    ((JSONObject) deviceFromJson).get(parameter).toString().equalsIgnoreCase(individualdeviceParameter)).findFirst().get();
-            String deviceName = (String) deviceFoundFromJsonFile.get("name");
-            String deviceOsVersion = (String) deviceFoundFromJsonFile.get("version");
-            String deviceUdid = (String) deviceFoundFromJsonFile.get("udid");
-            return new Device(platformOs, deviceName, deviceOsVersion, deviceUdid);
-        }).collect(Collectors.toList());
+        String platformOs = TestConfiguration.getPlatformOs();
+        JSONObject devicesJsonFile = JSONFileUtility.getJsonFileAsJsonObject(Constants.DEVICES_JSON_PATH);
+        JSONArray platformDevicesArray = (JSONArray) devicesJsonFile.get(platformOs);
+
+        List<Device> devices = new ArrayList<Device>();
+        for (int i = 0; i < platformDevicesArray.size(); i++) {
+            JSONObject deviceJSON = (JSONObject) platformDevicesArray.get(i);
+            if (devicesParametersList.contains(deviceJSON.get(parameter).toString())) {
+                String deviceName = (String) deviceJSON.get("name");
+                String deviceOsVersion = (String) deviceJSON.get("version");
+                String deviceUdid = (String) deviceJSON.get("udid");
+                devices.add(new Device(platformOs, deviceName, deviceOsVersion, deviceUdid));
+            }
+        }
+        return devices;
     }
+
+//        return devicesParametersList.stream().map(deviceParameterValue -> {
+//            JSONObject devicesJsonFile = JSONFileUtility.getJsonFileAsJsonObject(Constants.DEVICES_JSON_PATH);
+//            JSONArray platformDevicesArray = (JSONArray) devicesJsonFile.get(platformOs);
+//            JSONObject deviceFoundFromJsonFile = (JSONObject) platformDevicesArray.stream().filter(deviceFromJson ->
+//                    ((JSONObject) deviceFromJson).get(parameter).toString().equalsIgnoreCase(deviceParameterValue)).findFirst().get();
+//            String deviceName = (String) deviceFoundFromJsonFile.get("name");
+//            String deviceOsVersion = (String) deviceFoundFromJsonFile.get("version");
+//            String deviceUdid = (String) deviceFoundFromJsonFile.get("udid");
+//            return new Device(platformOs, deviceName, deviceOsVersion, deviceUdid);
+//        }).collect(Collectors.toList());
 
     private DesiredCapabilities getServerCapabilities() {
         DesiredCapabilities serverCapabilities = new DesiredCapabilities();
         serverCapabilities.setCapability(MobileCapabilityType.NEW_COMMAND_TIMEOUT, 60 * 15);
-        serverCapabilities.setCapability(MobileCapabilityType.NO_RESET, true);
+        serverCapabilities.setCapability(MobileCapabilityType.NO_RESET, false);
         return serverCapabilities;
     }
 
@@ -126,14 +137,16 @@ public abstract class SessionManager {
         logUtility.logDebug("The server capibilties passed to appium is" + serverCapabilities.toString());
 
         int chromeDriverPort = getRandomFreePort();
-        int port = getRandomFreePort();
+        int systemPort = getRandomFreePort();
         int bootstrapPort = getRandomFreePort();
-        logUtility.logDebug("ports-" + chromeDriverPort + " " + port + " " + bootstrapPort);
-        AppiumServiceBuilder appiumBuilder = new AppiumServiceBuilder().withAppiumJS(new File(getAppiumPath())).withCapabilities(serverCapabilities)
+        logUtility.logDebug("ports-" + chromeDriverPort + " " + systemPort + " " + bootstrapPort);
+        AppiumServiceBuilder appiumBuilder = new AppiumServiceBuilder()
+                .usingDriverExecutable(new File(TestConfiguration.getNodePath()))
+                .withAppiumJS(new File(TestConfiguration.getAppiumPath())).withCapabilities(serverCapabilities)
                 .withArgument(GeneralServerFlag.LOG_LEVEL, "warn").withLogFile(new File("appiumlogs.txt"))
                 .withArgument(AndroidServerFlag.SUPPRESS_ADB_KILL_SERVER).withArgument(AndroidServerFlag.BOOTSTRAP_PORT_NUMBER, Integer.toString(bootstrapPort))
                 .withArgument(AndroidServerFlag.CHROME_DRIVER_PORT, Integer.toString(chromeDriverPort)).withArgument(GeneralServerFlag.SESSION_OVERRIDE)
-                .withArgument(AndroidServerFlag.CHROME_DRIVER_EXECUTABLE, System.getProperty("user.dir") + "/res/chromedriver").usingAnyFreePort();
+                .withArgument(AndroidServerFlag.CHROME_DRIVER_EXECUTABLE, System.getProperty("user.dir") + "/src/resources/chromedriver").usingAnyFreePort();
 
         appiumLocalService = appiumBuilder.build();
         logUtility.logDebug("appium service builder build is completed");
@@ -155,10 +168,6 @@ public abstract class SessionManager {
             logUtility.logException(ExceptionUtils.getStackTrace(e));
         }
         return port;
-    }
-
-    public String getAppiumPath() {
-        return "/usr/local/lib/node_modules/appium/build/lib/main.js";
     }
 
     public void stopAppiumService() {

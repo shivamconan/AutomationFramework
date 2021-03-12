@@ -1,13 +1,9 @@
 package utility;
 
-import com.mongodb.util.JSON;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.*;
-import org.testng.Reporter;
-
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Map;
@@ -79,5 +75,13 @@ public class JSONFileUtility {
         }
 
         return getJsonObjectFromString(requestJsonAsString);
+    }
+
+    public static JSONArray replaceVariablesInJsonArrayWithTheirValuesFromMap(JSONArray requestJsonArray, Map<String,Object> variablesMap) {
+        JSONArray finalRequestJsonArray = requestJsonArray;
+        for(int i =0; i<requestJsonArray.size(); i++) {
+            finalRequestJsonArray.set(i, replaceVariablesInJsonWithTheirValuesFromMap((JSONObject) requestJsonArray.get(i), variablesMap));
+        }
+        return finalRequestJsonArray;
     }
 }

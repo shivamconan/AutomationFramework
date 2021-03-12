@@ -1,6 +1,6 @@
 package utility;
 
-import devices.Device;
+import objects.Device;
 import org.testng.Assert;
 
 import java.util.HashMap;

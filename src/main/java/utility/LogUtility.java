@@ -7,13 +7,10 @@ import constants.Constants;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.TakesScreenshot;
 import org.testng.Reporter;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -93,10 +90,11 @@ public class LogUtility {
     public void logScreenshot(File screenshot, String testName) {
         try {
             String dateName = new SimpleDateFormat("yyyyMMddhhmmss").format(new Date());
-            String screenshotPath = Constants.TEST_OUTPUT + Constants.slash + "Screenshot" + Constants.slash + testName + "-" + dateName + ".png";
+            String screenshotName = testName + "-" + dateName + ".png";
+            String screenshotPath = Constants.TEST_OUTPUT + Constants.slash  + Constants.SCREENSHOT_FOLDER_NAME + Constants.slash + screenshotName;
             File finalDestination = new File(screenshotPath);
             FileUtils.copyFile(screenshot, finalDestination);
-            logException("Screenshot- " + extentlogger.addScreenCapture(screenshotPath));
+            logException("" + extentlogger.addScreenCapture(Constants.SCREENSHOT_FOLDER_NAME + Constants.slash + screenshotName));
         } catch (IOException e) {
            logException(ExceptionUtils.getStackTrace(e));
         }

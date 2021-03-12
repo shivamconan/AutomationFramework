@@ -32,11 +32,6 @@
 
         <!-- custom javascript -->
         <scripts>
-            <![CDATA[
-        $(document).ready(function() {
-
-        });
-      ]]>
         </scripts>
 
         <!-- custom styles -->

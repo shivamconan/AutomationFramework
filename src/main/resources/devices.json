@@ -1,25 +1,35 @@
 {
   "android" : [
     {
-      "name": "Samsung Galaxy J6",
-      "udid": "",
-      "version": "8.0"
+      "name": "Samsung Galaxy S8",
+      "udid": "ce051715b2392a1203",
+      "version": "9.0"
     },
     {
-      "name": "Oppo",
-      "udid": "",
+      "name": "Google Pixel2 XL emulator",
+      "udid": "emulator-5554",
+      "version": "9.0"
+    },
+    {
+      "name": "Vivo 5",
+      "udid": "FQ99LV4TVCW88XHQ",
+      "version": "9.0"
+    },
+     {
+      "name": "OP",
+      "udid": "ec92755d",
       "version": "9.0"
     }
   ],
   "ios" : [
     {
-      "name": "iPhone 6",
-      "udid" : "",
-      "version" : "12.3.1"
+      "name": "iPhone 8",
+      "udid" : "81A58605-90E2-4936-80EE-447124220D91",
+      "version" : "13.3"
     },
     {
       "name": "iPhone 7",
-      "udid" : "",
+      "udid" : "ea5999aca8f1c8094f116963c84eb9ff9bc8c83e",
       "version" : "13.1"
     }
   ]

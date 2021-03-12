@@ -1,8 +1,7 @@
 package utility;
 
 import constants.Constants;
-import constants.Defaults;
-import devices.Device;
+import objects.Device;
 
 import java.util.Properties;
 
@@ -16,7 +15,7 @@ import java.util.Properties;
 
 public class AndroidUtility {
 
-    public Properties environmentProperties = PropertyFileUtility.propertyFile(Constants.ENVIRONMENT_PROPERTIES_PATH);
+    public Properties environmentProperties = PropertyFileUtility.propertyFile("");
 
     public void grantPermissions(Device device) {
         String permissionsPrefix = "adb -s " + device.getDeviceUdid() + " shell pm grant " + environmentProperties.getProperty("androidPackageName");

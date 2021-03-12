@@ -11,6 +11,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -22,6 +23,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -64,6 +66,8 @@ public class ApiUtility {
             httpRequestBase = new HttpPut(URL);
         } else if (method.equalsIgnoreCase("patch")) {
             httpRequestBase = new HttpPatch(URL);
+        } else if(method.equalsIgnoreCase("delete")) {
+        	httpRequestBase = new HttpDelete(URL);
         }
         httpRequestBase = setHeaders(httpRequestBase, headers);
         return httpRequestBase;
@@ -88,6 +92,12 @@ public class ApiUtility {
             logUtility.logException(ExceptionUtils.getStackTrace(e));
         }
         return t;
+    }
+
+    public Map<String, String> getCommonHeaders() {
+        Map<String, String> commonHeaders = new HashMap<>();
+        commonHeaders.put(HTTP.CONTENT_TYPE, "application/json");
+        return commonHeaders;
     }
 
     public HttpResponse sendRequest(String method, String URL, Map<String, String> headers) {
@@ -127,6 +137,23 @@ public class ApiUtility {
         }
         return response;
     }
+
+    public HttpResponse sendRequestArray(String method, String URL, Map<String, String> headers, StringEntity httpEntity) {
+        HttpResponse response = null;
+        try {
+            HttpClient client = HttpClientBuilder.create().build();
+            HttpPost httpPost = new HttpPost(URL);
+            httpPost.setEntity(httpEntity);
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
+                httpPost.setHeader(entry.getKey(), entry.getValue());
+            }
+            response = client.execute(httpPost);
+        } catch (IOException e) {
+            logUtility.logException(ExceptionUtils.getStackTrace(e));
+        }
+        return response;
+    }
+
 
     public Document convertStringToXML(String input) {
         Document doc = null;
@@ -172,7 +199,7 @@ public class ApiUtility {
         String auth = username + ":" + accessKey;
         byte[] encodedAuth = Base64.encodeBase64(
                 auth.getBytes(StandardCharsets.ISO_8859_1));
-        return "Basic " + new String(encodedAuth);
+        return "Token " + new String(encodedAuth);
     }
 
     public String getMultiPartEntityAsString(HttpEntity multipartEntity)

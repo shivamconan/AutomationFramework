@@ -1,4 +1,5 @@
-# Master automation framework - Web + App + Api
+
+## Cubii automation framework - Web + App + Api
 
 ## Based on
 
@@ -10,467 +11,331 @@
 
 4. TestNG
 
+5. Extent Reports
+
 ## Supports
 
 1. Parallel Execution of Android or iOS devices
 
-2. Runtime devices detection and execution based on environment specified (android/ios)
+2. Api + Web automation
 
-3. Dynamic Suite Generator. Will set test classes on runtime based on tags passed.
+3. Page object Model using a single screen class to store both android and ios locators at same place.
 
-4. Retry for failed cases.
+4. Common gestures and controls like Full Screen Swipe, Half Screen swipe, Pickerwheel interactions, Keyboard handling, Bring element to focus, scroll, click, enter text, etc. 
 
-5. Log4j for logging.
+5. Execution configuration for local and cloud devices as well as application environment via single yaml file.
 
-6. Extent Reports.
+6. Log4j for logging.
 
+7. Extent Reports.
 
+8. Retry for failed cases (In Progress)
 
 ## Usage -
 
-Every Functionality Test Suite you will create using this framework will have following 3 things- 
+Every Module/Screen Test Cases you will create using this framework will have following 4 things (Example provided below) - 
 
-* Test Step Class
+* ### Screen Class
 
-	Each Test Steps Class must have a constructor which intializes AppiumLibrary object with the driver passed in argument
+	Each Screen Class will have static fields to store both android & ios locators of CubiiMobileBy type.
 
-* Test Flow Class- 
-     
-     This will contain abstracted navigation flows to be used in your test automation and assertions. 
+* ### Test Step Class
 
-* Test Class-
-
-    This is the main Test Class for each functionality/suite. This will contain your @Test methods and is reponsible for calling the test code.
-    
-	Each and every Test Class must extend BaseClass which will provide driver and other session related fields.
-    And override initializeTestObjects() method which will intialize helper objects to be used in the test case.
-    
-       
+	- Contains utility methods for micro-interaction steps needed to perform on the app. Like "clickOnXXX", "getTitle", etc.
 	
+    - Each Test Steps Class must have a constructor which intializes `AppiumLibrary` object with the driver passed in argument
+
+* ### Test Flow Class- 
+     
+     - This will contain abstracted navigation flows to be used in your test automation and assertions. 
+     
+     - Each method in the class will contain multiple interactions utility methods created in Steps class to be reused while writing tests across different modules.
+
+* ### Test Class-
+
+    - This is the main Test Class for each functionality/suite. This will contain your `@Test` methods and is responsible for calling the test code (defined in Flows class).
+        
+	- Each and every Test Class must extend BaseClass which will provide driver and other session related fields.
+    And override `initializeTestObjects()` method which will intialize helper objects to be used in the test case.
+    
+
+We are going to see an example of a common login test case. I will attach code snippets from the framework style and then explain what it does below them.
+
 ### Example of Login Functionality-
 
 
-#### Step 1 : Create a properties file to store all the locators for Login functionality
+#### Step 1 : Create a `LoginScreen.java` class file to store all the locators for Login functionality - 
 
-  Separate file must be created each for android and ios in locators package -
-  
-  locators.android.loginPage.properties-
-  
-     nextBtn=XP_//android.widget.TextView[@text='NEXT']
-     // android locators
-     
-  locators.ios.loginPage.properties-
-  
-     nextBtn=XP_//XCUIElement[@text='NEXT'] 
-     // ios locators
+ ```java
+ public final static CubiiMobileBy SIGN_IN_WITH_EMAIL_BTN = new CubiiMobileBy(MobileBy.id("ib_login_email"), MobileBy.xpath("//*[contains(@name, 'emailButton')]"));
+ public final static CubiiMobileBy USER_NAME_FIELD = new CubiiMobileBy(MobileBy.xpath("//android.widget.EditText[contains(@resource-id,'editText')]"), MobileBy.xpath("//*[contains(@name,'emailTextField')]"));
+ ```
 
-#### Step 2 : Create a Test Steps Class - LoginTestSteps.java    
+Here you will define fields of type CubiiMobileBy which accepts 2 MobileBy as arguments, one for android and other for ios.
 
-This Steps Class will contain all the individiual methods which performs various actions. One flow will combine multiple steps and one test will combine multiple flows.
- 
-Steps class uses the properties file created in Step 1 to locate the elements -
 
-    public class LoginSteps
+`CubiiMobileBy` is a special class in the framework, object of which holds together both os locators for the common element. It will supply the appropriate `MobileBy` locator to `AppiumDriver` based on execution os automatically on the go.
+
+#### Step 2 : Create a Test Steps Class - `LoginTestSteps.java`, extending `LoginScreen` class created in Step 1
+
+````java
+    public class LoginSteps extends LoginScreen
     {
-        Properties loginPageLocator = PropertyFileUtility.propertyFile(Constants.LOCATORS_PATH + "/loginPage.properties");
         AppiumLibrary appiumLibrary;
-    
-        public LoginSteps(SessionManager sessionManager)
-        {
+        UserOnboardingDetailsSteps userOnboardingDetailsSteps;
+
+        public LoginSteps(SessionManager sessionManager) {
             appiumLibrary = new AppiumLibrary(sessionManager);
         }
-    
-        public void enterUserName(String userName)
-        {
-            appiumLibrary.enterText(loginPageLocator.getProperty("userNameField"), userName);
+
+        public void clickOnLoginWithEmailButton() {
+            appiumLibrary.clickOnMobileElement(SIGN_IN_WITH_EMAIL_BTN);
         }
-    
-        public void enterPassword(String password)
-        {
-            appiumLibrary.enterText(loginPageLocator.getProperty("passwordField"), password);
+
+        public void enterUserName(String userName) {
+            appiumLibrary.enterText(USER_NAME_FIELD, userName);
         }
-    
-        public void clickOnLoginButton()
-        {
-            appiumLibrary.clickOnMobileElement(loginPageLocator.getProperty("loginBtn"));
+
+        public void enterPassword(String password) {
+            appiumLibrary.enterText(PASSWORD_FIELD, password);
         }
-    
-        public boolean checkWelcomeScreen() {
-            return appiumLibrary.isElementPresent(loginPageLocator.getProperty("welcomeScreen"), 10);
+
+        public void clickOnLoginButton() {
+            appiumLibrary.clickOnMobileElement(LOGIN_BTN);
         }
     }
+````
 
-#### Step 3 : Create a Test Flow Class - LoginFlow.java    
+As you can see, it contains micro-interaction utility methods using the locator objects you created in Step 1. In the example, its trying to perform 4 different steps - 
 
-This Steps Class will contain all the methods which performs various actions being used in Test Class. 
-It uses the properties file created in Step 1 to locate the elements -
+1. Click on Login with email option (to land on login screen)
 
-    public class LoginFlow {
+2. Enter username
+
+3. Enter password
+
+4. Click on login button
     
-        private LoginSteps loginSteps;
+You might have noticed the constructor contains 2 classes - 
+
+`SessionManager` - This class manages the appium session across the test suite. For every steps, flow class we will create we must supply this object in the constructor while creating their object. It will be supplied via `BaseClass`. (More on this later)
+
+`AppiumLibrary` - Contains appium interaction methods to actually interact with app on mentioned element locators.
+
+Every Steps class MUST have the constructor mentioned. In addition it can include other Steps objects if you want to use them. More on them later.
+
+#### Step 3 : Create a Test Flow Class - `LoginFlow.java` 
+
+So, once we have all the interaction methods in Steps Class, we would want a wrapper around them to combine those unit steps into meaningful user-flows.
+
+This Flows Class will contain all such methods which ofcourse will comprise of calling multiple "steps".
+
+For example, one "flow" will be to login successfully. We have already defined 4 steps above, lets define a wrapper flow method to combine the above to create a flow - 
+
+````java
+    public class LoginFlow extends LoginSteps {
+
         private LogUtility logUtility = new LogUtility(LoginFlow.class);
-        private Properties environmentProperties = PropertyFileUtility.propertyFile(Constants.ENVIRONMENT_PROPERTIES_PATH);
-        private DBUtility dbUtility;
-    
+
         public LoginFlow(SessionManager sessionManager) {
-            loginSteps = new LoginSteps(sessionManager);
-            dbUtility = new DBUtility(sessionManager);
+    	    super(sessionManager);
             logUtility.setExtentLogger(sessionManager.getExtentReporter().getExtentlogger());
         }
     
-        public void loginSuccessfully() {
-            loginSteps.enterUserName("username");
-            loginSteps.enterPassword("password");
-            loginSteps.clickOnLoginButton();
-    
-            Assert.assertTrue(loginSteps.checkWelcomeScreen());
+        public void loginWithEmail(String email, String passowrd) {
+    	    clickOnLoginWithEmailButton();
+            enterUserName(email);
+            enterPassword(passowrd);
+            clickOnLoginButton();
         }
-    
-        public void logout() {
-            //steps for logout
-        }
-    
-    }
-           
-
-
-#### Step 4 : Create a Test Class - LoginTest.java    
-
-
- This Test Class will extend BaseClass and implement initializeTestObjects() method which initializes the LoginFlows object created in Step 3 
- and the logUtility logs onto TestNG default reports, Extent reports and on console using Log4j
-as per the log method used. 
         
+    }
+````
 
+As you can see, we have created a similar constructor for `LoginFlow` class as we did for `LoginSteps`. We created a method `loginWithEmail` method to log in a user. You can include an additional assertion to verify whether the login is successful but you get the idea.
 
+#### Step 4 : Create a Test Class - `LoginTest.java`
+
+So, now we have to finally add our TestNG class to put everything together. We create a `LoginTest` class which can contain multiple `@Test` methods for each of our test case.
+
+````java
     public class LoginTest extends BaseClass {
-    
+
         private LoginFlow loginFlow;
         private LogUtility logUtility = new LogUtility(LoginTest.class);
-    
+
         @Override
         public void initializeTestObjects() {
             loginFlow = new LoginFlow(sessionManager);
             logUtility.setExtentLogger(sessionManager.getExtentReporter().getExtentlogger());
         }
-    
+        
         @Test
         public void loginTest() {
             logUtility.logTestTitle("Login Test");
             logUtility.logTestInfo("Checking login flow");
-    
+        
             loginFlow.loginSuccessfully();
-            //other flows
+                //other flows
         }
-    
     }
+````
+        
+        
+The Test Class will extend `BaseClass` from where we are gonna receive an instance of `SessionManager` containing initialized `AppiumDriver` (as per the configuration specified).
 
-    
-### How To's   
+You notice, we have `initializeTestObjects` method which overrides it for the one in parent `BaseClass`. This is necessary to assign `SessionManager` instance (initialized in @BeforeTest) to pass into your flows classes.
 
-#### 1. Use Common Steps-
+And then we have our `@Test` method to call all the flows we want to and log the steps and other info along the way.
 
-   There will be certain methods which are common throughout for DealerApp and are not specific to any functionality. 
-   You can use it just like how you would use any Steps class in your Test Class just like the example shown above.
 
-#### 2. Use Logger-
+## Useful Classes/Utilities
 
-    LogUtility class contains all the logging methods. The methods logs using Log4j and also logs in the TestNG and Extent reports.
-    
-    int stepCount = 0;
-    LogUtility logUtility = new LogUtility(LoginPage.class);
-    
+* #### AppiumLibrary - 
+
+    You would use appium interaction utility methods defined in `AppiumLibrary` in your Steps class. It supports `clickOnElement`, `clickOnElementIfPresent`, `getAttribute`, `getText`, `scrollToElement`, `bringElementToTop`, `hideKeyboard`, `pressKey`, `enterText`, `scrollUp`, `scrollDown`, `swipeOnElement` and lot more actions!
+
+* #### CommonFlow -
+
+    Many times in an application, some steps and flows are common for all/most parts of the app. For example, menu navigation panel could remain same no matter the screen user is on. Or pressing on notifications icon which is present on many/all screens of the app. So it makes sense to write interaction methods for these in a CommonFlow class and use it in any of your module Flows class.
+
+* #### LogUtility -
+
+    For every class, declare a variable of `LogUtility` and in constructor, (As seen in examples above) initialize by passing instance of extent logger from sessionmanager like this -
+
+````java
+        @Override
+        public void initializeTestObjects() {
+            loginFlow = new LoginFlow(sessionManager);
+            logUtility.setExtentLogger(sessionManager.getExtentReporter().getExtentlogger());
+        }
+````
+
+   It contains various helpful logging methods to log on different levels as well as different markups in the TestNG and Extent Reports like -
+
+````java
     logUtility.logTestTitle("Testing Login functionality");
-    
+
     logUtility.logStep("Step " + (++n) + " : Clicking on login button");
-    //login step
-    
+
     logUtility.logWarning("Element not found, trying again.");
-    
-    logStep(), logTestTitle(), logTestInfo(), logException() logs in the Extent Report as well along with on console and TestNG reports.
-    logInfo(), logWarning() does not log in the Extent Report and only logs on console and TestNG reports.
-    
-    Additionally, there is a logMessage() method -
-    
-    logMessage(message, true) -> logs in the Extent Report as well along with on console and TestNG reports.
-    
-    logMessage(message, false) -> does not log in the Extent Report and only logs on console and TestNG reports.
-    
-#### 3. Use Property files-
-
-   utility.PropertyUtility.java Class helps to write and read properties file.
-   You can either get the entire Properties object using the static method propertyFile() -
-
-       Properties myPropertyObject = PropertyUtility.propertyFile(filePath);
-       String property1 = myPropertyObject.get("property1");
-       String property2 = myPropertyObject.get("property2");
-    
-   This is useful when you want all the properties in one single call and not want to write anything.
  
-   Another way is to create an object of PropertyUtility with the provided file path-
+    logUtility.logTestInfo("Current device is " + sessionManager.getCurrentDevice());
+````
+
+* #### WebLibrary -
+
+    Similar to AppiumLibrary, WebLibrary contains interaction utility methods for Selenium like click, enterText, switchToWindow, scrollUp, scrollDown and many more!
  
-       PropertyUtility myProperty = new PropertyUtility(filePath);
-       String property1 = myProperty.getProperty("property1");
-       myProperty.setProperty("property1");
-    
-   Mostly, you would want to have locators properties file, for that there is a special method getLocatorPropertyFile()-
+ 
+* #### Constants & Test_Data -
+
+    Classes with public final static fields to store project directory paths, test data like user credentials, etc. Anything you might need to access globally in your tests!
+ 
+* #### AndroidUtility & iOSUtility -
+
+    You can find methods related to installing/uninstalling apps on your phone, some adb, idevice utility commands [Not finished yet]
+ 
+* #### DBUtility (In progress) -
+
+    `DBUtility` class establishes a MySQL connection whenever its constructor is called. Set your dbUrl, username and password in `src/main/resources/{environment}.properties` file. To execute query -
+
+````java
+    DBUtility dbUtility = new DBUtility();
+    dbUtility.executeQuery(your_query);
+    dbUtility.closeDbConnection();
+````
    
-       Properties loginPageLocator = PropertyFileUtility.getLocatorPropertyFile( "loginPage.properties");
+* #### JSONFileUtility -
+
+    Normally you would store your api requests in json files. This class will help you read those files to json objects or arrays -
+ 
+ ````java
+        JSONObject loginRequest = JSONFileUtility.getJsonFileAsJsonObject(LoginRequest.json);
+ ````
+   
+Well, that's okay you ask but how to actually call an API?
+
+* ### How to test APIs -
+
+We have written a wrapper around HttpClient called `ApiUtility`. Below is an example to get a json object from a file, replace variables in the json with their actual intended values in the code and then send a post request and then retrieve a value from the response and return it -
+
+Lets say you have loginRequest.json(in apiRequests folder) with `{{email}}` and `{{password}}` as variables -
+ 
+````ruby
+ {
+   "email" : "{{email}}",
+   "password" : "{{password}}"
+ }
+````
+    
+Calling login api to login with passed email & password -
+
+````java
+    public String loginWithEmailViaApi(User user) {
+         String baseUrl = TestConfiguration.getBaseUrl() + "/api/v5/login/";
+         Map<String, String> headers = apiUtility.getCommonHeaders(); //You can define whatever common headers like Content-Type = application/json
+         //get the json file
+         JSONObject requestBody = JSONFileUtility.getJsonFileAsJsonObject(Constants.API_REQUESTS_PATH + Constants.slash + "loginRequest.json");
          
-   which is equivalent to writing-
-   
-      Properties loginPageLocator = PropertyFileUtility.propertyFile( Constants.LOCATORS_PATH + "/loginPage.properties");
-      
-   Each method closes the file after performing required action.
+         //prepare a map for the variables you defined in your json file and their values
+         Map<String, Object> variablesMap = new HashMap<>();
+         variablesMap.put("email", user.getEmail());
+         variablesMap.put("password", user.getPassword());
+         
+         //now prepare the final json body by replacing all the values of variables
+         JSONObject finalBody = JSONFileUtility.replaceVariablesInJsonWithTheirValuesFromMap(requestBody, variablesMap);
+         
+         //call the api and convert the HttpResponse object to JSONObject
+         JSONObject my_api_response_json = apiUtility.convertResponseToJsonObject(apiUtility.sendRequest("post", baseUrl, headers, finalBody));
+         
+         //retrieve token from the response and return it
+         JSONObject dataJson = (JSONObject) my_api_response_json.get("data");
+         String token = dataJson.get("token").toString();
+         String userId = dataJson.get("id").toString();
+         user.setToken(token);
+         user.setUserId(userId);
+         return token;
+     }
+````
  
- 
-#### 4. Use JSON files-
- 
-   utility.JSONFileUtility Class helps to read JSON files.
- 
- 
-   Get JSONObject from the file-
- 
-       JSONObject devicesJsonFile = JSONFileUtility.getJsonFileAsJsonObject(filePath);
- 
- 
-   Get JSONArray from the file-
-    
-       JSONArray devicesJsonFile = JSONFileUtility.getJsonFileAsJsonArray(filePath);
- 
-   After that you can write your parser logic.
+Similarly, you can call your get, put apis with whatever arguments you want to. Simple, right?
 
-#### 5. Test your API's-
 
-   ApiLibrary class contains all the helper methods you need for sending HTTP requests. You need to create a JSON object for your body and a hashmap for your headers -
-      
-      ApiLibrary apiLibrary = new ApiLibrary();
-      String my_api_url = "https://test.com/test";
-      Map<String, String> headers = new HashMap<>();
-      headers.put("Content-type", "application/json");
-      JSONObject jsonBody = new JSONObject();
-      jsonBody.put("field1", "value1");
-      jsonBody.put("field2", "value2");
-      
-      HttpResponse my_api_respone = apiLibrary.sendRequest("post", my_api_url, headers, jsonBody);
-      JSONObject my_api_response_json = apiLibrary.convertResponseToJsonObject(my_api_respone);
-   
-   You should keep your json bodies in main/resources/apRequests directory. 
-   Many times you would need to replace some parameters with custom variables. JSONUtility class contains a helper method to replace all your variables through a HashMap. Simply put {{}} around the values for the keys you would want to replace in your code 
-   and pass a map providing the values to be replaced with. For example, if your json is like this -
-   
-      {
-        "parameter1" : "{{value1}}",
-        "parameter2" : "{{value2}}"
-      }
-      
-   Code to generate final json request -
-   
-     JSONObject requestBody = JSONFileUtility.getJsonFileAsJsonObject(Constants.API_REQUESTS_PATH + Constants.slash + "myRequest.json");
-     Map<String, Object> variablesMap = new HashMap<>();
-     variablesMap.put("value1", "test123");
-     JSONObject finalBody = JSONFileUtility.replaceVariablesInJsonWithTheirValuesFromMap(requestBody, variablesMap);
+#### Retry Listener - (In Progress)
+
+#### How to run tests under different configurations from command line - (In Progress)
+ 
+ Run on android(or ios) on whatever devices connected -
+            
+  ````ruby   
+     mvn clean test -DisTestRunOnSpecificDevice = false -DplatformOs = android (or ios) -DtestSuites=Login,Ocb -DtestEnvironment=staging
+  ````   
+
+ Run on android(or ios) on specific devices connected -
+        
+   ````ruby   
+     mvn clean test -DisTestRunOnSpecificDevice = true -DplatformOs = android (or ios) -DexecutionDevicesList = "Samsung Galaxy J6, Nokia 3" -DtestSuites=Login,Ocb -DtestEnvironment=staging
+   ````
      
- 
-#### 6. DB connection -
-
-   DBUtility class establishes a MySQL connection whenever its constructor is called. Set your dbUrl, username and password in src/main/resources/{environment}.properties file.
-   To execute query -
-   
-      DBUtility dbUtility = new DBUtility();
-      dbUtility.executeQuery(your_query);
-      dbUtility.closeDbConnection();
-   
-#### 7. Get the device being used for the current test -
-
-   SessionManager contains getCurrentTestDevice() returns a Device object which stores various info about the device being used.
-   
-      public class LoginPage extends BaseClass
-      {
-        Device currentTestDevice = sessionManager.getCurrentTestDevice();
-        String currentTestDeviceName = currentTestDevice.getDeviceName();
-        logUtility.logTestInfo(currentTestDeviceName);
-      }
-       
-       
-#### 8. Run on android(or ios) on whatever devices connected -
-
-      mvn clean test -DisTestRunOnSpecificDevice = false -DplatformOs = android (or ios) -DtestSuites=Login,Ocb -DtestEnvironment=staging
- 
-#### 9. Run on android(or ios) on specific devices connected -
-
-      mvn clean test -DisTestRunOnSpecificDevice = true -DplatformOs = android (or ios) -DexecutionDevicesList = "Samsung Galaxy J6, Nokia 3" -DtestSuites=Login,Ocb -DtestEnvironment=staging
-      
-#### 10. Run tests locally without command line - 
-
-Initially the testng.xml will look like-
-
-      <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-
-      <suite name="Suite1" verbose="1" parallel="methods" thread-count="2">
-       <listeners>
-           <listener class-name="listeners.DynamicSuiteGenerator" />
-           <listener class-name="listeners.AnnotationTransformer" />
-       </listeners>
-      </suite>
-
-You can see the file only contains the listeners as tests will be added dynamically using DynamicSuiteGenerator class in listeners package.
-On the runtime it checks whether the xml file contains any test tags before or not. If yes, it will pick up those tests, other wise it will
-pickup from the -DtestSuites parameter in command line, if not specified from command line, it will pickup from defaultEnvironment.properties.
-
-If you are running the xml file locally, you can add and specify your tests the usual way-
-
-    <test name="Nopackage" >
-        <classes>
-            <class name="testClasses.LoginTest" />
-        </classes>
-    </test>
-    
-    
- Threads will be automatically created based on the number of devices (whether the connected ones or the ones passed from command line).
-  
-
-#### 11. Reports -
-   This framework uses Extent Reports which is saved by the name extentReport.html in test-output folder. By default, surefire-plugin stores
-   the TestNG reports in target folder, so in tear-down this framework copies the reports to the test-output folder for easy accessibility.
-
-## Internal Architecture-
- 
-### SessionManager:
-   Abstract class which contains various methods to start/service appium service. AndroidSessionManager and IosSessionManager extends this class
-   and provides respective implementations for getting devices(android or ios), starting driver(AndroidDriver or IosDriver).
- 
-### BaseClass:
-   Contains all the setup methods which calls SessionManager methods to initialize and maintain Appium session. On run time, it creates an AndroidSessionManager
-   or IosSessionManager object on the basis of platformOs specified.
- 
-### locators :
-   package contains two sub-packages - android and ios which contains respective locators for each functionality.
- 
-### ElementLocator :
-   Class contains elements() method which returns By object based on the first two characters specified. 
-   For ex, if passed XP_//a[@class='test'], it will return By.Xpath("//a[@class='test']").
-   The various parameters are -
-   XP - Xpath
-   ID - Id
-   CS - CSS
-   NM - Name
-   CN - Class Name
-   LT - Link Text
-   PL - Partial Link Text
-   TN - Tag Name
- 
-### AppiumLibrary :
-   Class contains various utility methods to perform common appium actions like click, swipe, scroll etc.
-   It takes locator received from locators properties file. In each method, it receives MobileElement object with the help of ElementLocator
-   as shown in example of Step 2 above. 
- 
-### WebLibrary :
-   Similar to AppiumLibrary, contains all utility methods of Selenium to help you write automation scripts. Contains methods to click, select, drag and drop, scroll, etc.
-   
-### JavaUtility :
-   Class contains several helper core Java methods to get current date, time, extract integers from string, etc. 
- 
-### resources :
-   
- * defaultEnvironmentParameters.properties -
-  
-      stores default properties for environment. If you are running tests locally, you will specify details here.
- 
-  * devices.json -
-  
-      contains device details in this format-
- 
-        {
-     
-         "android" : [
-      
-           {  
-        
-             "name": "Samsung Galaxy J6",
-          
-             "udid": "udid1",
-          
-             "version": "8.0"
-          
-           },
-        
-           {
-              //other devices  
-           }
-        
-         ],
-      
-         "ios" : [
-
-           {
-        
-             "name": "iPhone 6 Black",
-          
-             "udid" : "udid3",
-             
-             "version" : "12.3.1"
-          
-           },
-        
-           {
-        
-             //other devices
-          
-           }
-        
-         ]
-      
-       }
-
-When deviceName is passed from command line, the framework will fetch udid of the passed device from this file.
-
-### Constants :
-Contains static fields majorly for all your paths -
-
-       public static final String slash = System.getProperty("file.separator");
-   
-       public static final String PROJECT_DIRECTORY = System.getProperty("user.dir");
-   
-       public static final String MAIN_DIRECTORY = PROJECT_DIRECTORY + slash + "src" + slash + "main";
-   
-       public static final String TEST_DIRECTORY = PROJECT_DIRECTORY + slash + "src" + slash + "test";
-   
-       public static final String MAIN_RESOURCES_DIRECTORY = MAIN_DIRECTORY + slash + "resources";
-   
-       public static final String START_ACTIVITY_NAME = "com.test.yourActivity";
-   
-       public static final int DEFAULT_OBJECT_WAIT_TIME = 10;
-   
-       public static final String DEVICES_JSON_PATH = MAIN_DIRECTORY + slash + "resources" + slash + "devices.json";
-   
-       public static final String LOCATORS_PATH = MAIN_DIRECTORY + slash + "locators" + slash + EnvironmentParameters.getPlatformOs();
-
-
-### Defaults :
-Specifies static fields DEFAULT_ENVIRONMENT_PATH, DEALER_DEFAULT_APP_PATH, etc
-
-### DynamicSuiteGenerator :
-Class contains listener which creates dynamic suites based on specified test suites from command line or via xml file.
-
-### Configuration : 
+ Running via testng.xml is exactly how it should be - Just add a testng xml file with your tests & classes and you are good to go.
  
 
-#### * How to configure default reports in IntelliJ -
+### Internal Architecture 
 
-  * Go to Run -> Edit Congurations.
-  
-  * Under TestNG configuration, go to Listeners tab.
-  
-  * Add org.testng.reporters.TestHTMLReporter listener and save it.
-  
-  * Click on Use default reporters.
-  
-  
-Rest is described in comments in the codebase.
+Detailed Explanation & Architecture Diagram coming soon...
+
+### Reports Configuration :
+
+* How to configure default reports in IntelliJ -
+Go to Run -> Edit Congurations.
+
+Under TestNG configuration, go to Listeners tab.
+
+Add org.testng.reporters.TestHTMLReporter listener and save it.
+
+Click on Use default reporters. 
+ 
 
 
-
-
-        
 

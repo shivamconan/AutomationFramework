@@ -188,6 +188,34 @@ You notice, we have `initializeTestObjects` method which overrides it for the on
 
 And then we have our `@Test` method to call all the flows we want to and log the steps and other info along the way.
 
+## TestConfiguration
+
+You will have to add a TestConfiguration.yaml file where you will add all the configuration details & appium installation paths for framework to pick up. Add a file which looks like this in main project directory -
+
+
+	testEnvironment: staging
+	baseUrl: http://devapi.mycubii.com
+	qaBaseUrl: http://devapi.mycubii.com
+	platformOs: android
+	isTestRunOnSpecificDevice: false
+	executionDevicesList:
+ 	- Samsung Galaxy S8
+ 	- Redmi 5
+	android:
+	 name: Google Pixel2 XL emulator
+ 	 udid: emulator-5554
+ 	 version: 9.0
+
+        ios:
+ 	 name: iPhone 8
+ 	 udid: 81A58605-90E2-4936-80EE-447124220D91
+ 	 version: 13.3 
+        androidPackageName: 
+        iosPackageName: 
+        executionEnvironment: local
+        allowAPIUtilsOnProdEnvironment: false
+        nodePath: /usr/local/bin/node
+        appiumPath: /usr/local/lib/node_modules/appium/build/lib/main.js
 
 ## Useful Classes/Utilities
 
